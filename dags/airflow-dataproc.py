@@ -20,19 +20,6 @@ SPARK_JOB = {
     },
 }
 
-CLUSTER_CONFIG = {
-    "master_config": {
-        "num_instances": 1,
-        "machine_type_uri": "n1-standard-2",
-        "disk_config": {"boot_disk_type": "pd-standard", "boot_disk_size_gb": 1024},
-    },
-    "worker_config": {
-        "num_instances": 0,
-        "machine_type_uri": "n1-standard-2",
-        "disk_config": {"boot_disk_type": "pd-standard", "boot_disk_size_gb": 1024},
-    },
-}
-
 dag = DAG("airflow-dataproc", start_date=datetime(2021, 1, 1),
     schedule_interval="@daily", catchup=False)
 
@@ -44,7 +31,6 @@ config = ClusterGenerator(
         master_machine_type='n1-standard-2',
         worker_machine_type='n1-standard-2',
         zone='us-central1-c',
-
     ).make()
 
 create_cluster = DataprocCreateClusterOperator(
