@@ -1,7 +1,8 @@
 
 from airflow import DAG
 from datetime import datetime
-from airflow.providers.google.cloud.operators.dataproc import DataprocCreateClusterOperator, ClusterGenerator, DataprocDeleteClusterOperator, DataprocSubmitJobOperator
+from airflow.providers.goo
+gle.cloud.operators.dataproc import DataprocCreateClusterOperator, ClusterGenerator, DataprocDeleteClusterOperator, DataprocSubmitJobOperator
 
 
 PROJECT_ID = "single-nebula-319205"
