@@ -2,6 +2,7 @@ from airflow import DAG
 from datetime import datetime
 from airflow.providers.google.cloud.operators.dataproc import DataprocCreateClusterOperator, ClusterGenerator, \
     DataprocDeleteClusterOperator, DataprocSubmitJobOperator
+from airflow.providers.google.cloud.sensors.pubsub import PubSubPullSensor
 
 PROJECT_ID = "imposing-ace-344215"
 CLUSTER_NAME = "cluster-6bd4"
@@ -31,6 +32,15 @@ config = ClusterGenerator(
     zone=ZONE,
 ).make()
 
+wait_pub_sub = PubSubPullSensor(
+    task_id="wait_pub_sub",
+    project_id=PROJECT_ID,
+    subscription="db-pub-sub-topic-1-sub",
+    return_immediately=True,
+    ack_messages=False,
+    gcp_conn_id='google_cloud_default'
+)
+
 create_cluster = DataprocCreateClusterOperator(
     task_id="create_cluster",
     project_id=PROJECT_ID,
@@ -56,7 +66,7 @@ delete_cluster = DataprocDeleteClusterOperator(
     dag=dag
 )
 
-create_cluster >> spark_submit_task >> delete_cluster
+wait_pub_sub >> create_cluster >> spark_submit_task >> delete_cluster
 
 if __name__ == "__main__":
     dag.cli()
