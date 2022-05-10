@@ -4,11 +4,12 @@ if yes, then pass, otherwise fail"""
 
 from airflow import DAG
 from airflow.sensors.filesystem import FileSensor
+from airflow.operators.bash import BashOperator
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 """ Now create a DAG object """
-dag = DAG("bash_perator_dag", start_date=datetime(2022, 5, 1), schedule_interval="*/5 * * * *")
+dag = DAG("bash_perator_dag", start_date=datetime(2022, 5, 1), schedule_interval="@daily")
 
 check_file_task = FileSensor(
     task_id="check_file",
@@ -18,6 +19,22 @@ check_file_task = FileSensor(
     dag=dag
 )
 
-check_file_task
+mkdirCommand = BashOperator(
+    task_id="mkdirCommand",
+    bash_command="mkdir /Users/vikas/app/tmp/vikas"
+)
+
+sleep_task = BashOperator(
+    task_id="sleep_the_task",
+    bash_command='sleep 10',
+    sla=timedelta(seconds=5)
+)
+
+createFile = BashOperator(
+    task_id="createFile",
+    bash_command="touch /Users/vikas/app/tmp/vikas/file.txt"
+)
+
+check_file_task >> mkdirCommand >> sleep_task >> createFile
 """If there is a single task in the file, then we don't need to mention here "check_file_task", 
-thats why its giving warning. We don't even need to assign any varible for the task. """
+thats why its giving warning. We don't even need to assign any variable for the task. """
