@@ -4,12 +4,15 @@ from airflow.providers.google.cloud.operators.dataproc import DataprocCreateClus
     DataprocDeleteClusterOperator, DataprocSubmitJobOperator
 from airflow.providers.google.cloud.sensors.pubsub import PubSubPullSensor
 from airflow.operators.python import PythonOperator
+from airflow.operators.bash import BashOperator
 import time
 
 PROJECT_ID = "imposing-ace-344215"
 CLUSTER_NAME = "cluster-6bd4"
 REGION = "us-central1"
 ZONE = 'us-central1-c'
+
+EXEC_DATE = '{{ macros.ds_format(macros.ds_add(ds), "%Y-%m-%d", "%Y%m%d") }}'
 
 OUTPUT_FOLDER = "wordcount"
 
@@ -53,14 +56,20 @@ config = ClusterGenerator(
 
 
 def my_custom_function(ts, **kwargs):
-    print("task is sleeping")
+    print("task is sleeping ")
     time.sleep(20)
 
 
 sla_task = PythonOperator(
     task_id='sla_task',
     python_callable=my_custom_function,
+    sla=timedelta(seconds=10),
     dag=dag
+)
+
+print_execution_date = BashOperator(
+    task_id="print_execution_date",
+    bash_command='echo cobdate:' + EXEC_DATE
 )
 
 wait_pub_sub = PubSubPullSensor(
@@ -97,4 +106,4 @@ delete_cluster = DataprocDeleteClusterOperator(
     dag=dag
 )
 
-sla_task >> wait_pub_sub >> create_cluster >> spark_submit_task >> delete_cluster
+sla_task >> print_execution_date >> wait_pub_sub >> create_cluster >> spark_submit_task >> delete_cluster
