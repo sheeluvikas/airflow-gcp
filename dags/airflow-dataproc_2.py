@@ -12,7 +12,7 @@ CLUSTER_NAME = "cluster-6bd4"
 REGION = "us-central1"
 ZONE = 'us-central1-c'
 
-EXEC_DATE = '{{ macros.ds_format(macros.ds_add(ds), "%Y-%m-%d", "%Y%m%d") }}'
+EXEC_DATE = '{{ macros.ds_format(macros.ds_add(ds + 0), "%Y-%m-%d", "%Y%m%d") }}'
 
 OUTPUT_FOLDER = "wordcount"
 
