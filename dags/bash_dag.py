@@ -8,8 +8,11 @@ from airflow.operators.bash import BashOperator
 
 from datetime import datetime, timedelta
 
+EXEC_DATE = '{{ macros.ds_format(macros.ds_add(ds, 0), "%Y-%m-%d", "%Y%m%d") }}'
+SOURCE_SYSTEM_ID = '{{ dag_run.conf["source_system_id"] }}'
+
 """ Now create a DAG object """
-dag = DAG("bash_perator_dag", start_date=datetime(2022, 5, 1), schedule_interval="@daily")
+dag = DAG("bash_operator_dag", start_date=datetime(2022, 5, 1), schedule_interval="@daily")
 
 check_file_task = FileSensor(
     task_id="check_file",
@@ -21,18 +24,18 @@ check_file_task = FileSensor(
 
 mkdirCommand = BashOperator(
     task_id="mkdirCommand",
-    bash_command="mkdir /Users/vikas/app/tmp/vikas"
+    bash_command='mkdir -p /Users/vikas/app/tmp/' + EXEC_DATE + '/' + SOURCE_SYSTEM_ID
 )
 
 sleep_task = BashOperator(
     task_id="sleep_the_task",
-    bash_command='sleep 10',
+    bash_command='echo "{{ ti.xcom_push(key="k1", value="vikas.txt") }}"; echo "This is an echo after pushing xcom"',
     sla=timedelta(seconds=5)
 )
 
 createFile = BashOperator(
     task_id="createFile",
-    bash_command="touch /Users/vikas/app/tmp/vikas/file.txt"
+    bash_command='touch /Users/vikas/app/tmp/'+EXEC_DATE + '/' + SOURCE_SYSTEM_ID+'/"{{ ti.xcom_pull(key="k1") }}"'
 )
 
 check_file_task >> mkdirCommand >> sleep_task >> createFile
