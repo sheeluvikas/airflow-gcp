@@ -9,7 +9,7 @@ from airflow.models import Variable
 
 from datetime import datetime, timedelta
 
-EXEC_DATE = '{{ macros.ds_format(ds, "%Y-%m-%d", "%Y%m%d") }}'
+EXEC_DATE = '{{ ds_nodash }}'
 
 
 def create_dag(
