@@ -3,6 +3,7 @@ from datetime import datetime
 from airflow.providers.google.cloud.operators.dataproc import DataprocCreateClusterOperator, ClusterGenerator, \
     DataprocDeleteClusterOperator, DataprocSubmitJobOperator
 from airflow.providers.google.cloud.sensors.pubsub import PubSubPullSensor
+from airflow.providers.google.cloud.sensors.gcs import GCSObjectExistenceSensor
 
 PROJECT_ID = "imposing-ace-344215"
 CLUSTER_NAME = "cluster-6bd4"
@@ -32,6 +33,14 @@ config = ClusterGenerator(
     zone=ZONE,
 ).make()
 
+gcs_file_sensor = GCSObjectExistenceSensor(
+    task_id='gcs_file_sensor',
+    bucket='db-imposing-ace-test-bucket',
+    google_cloud_conn_id='google_cloud_default',
+    object='abc.txt',
+    dag=dag
+)
+
 wait_pub_sub = PubSubPullSensor(
     task_id="wait_pub_sub",
     project_id=PROJECT_ID,
@@ -60,13 +69,12 @@ spark_submit_task = DataprocSubmitJobOperator(
 delete_cluster = DataprocDeleteClusterOperator(
     task_id="delete_cluster",
     project_id=PROJECT_ID,
-    cluster_config=config,
     region=REGION,
     cluster_name=CLUSTER_NAME,
     dag=dag
 )
 
-wait_pub_sub >> create_cluster >> spark_submit_task >> delete_cluster
+gcs_file_sensor >> wait_pub_sub >> create_cluster >> spark_submit_task >> delete_cluster
 
 if __name__ == "__main__":
     dag.cli()
